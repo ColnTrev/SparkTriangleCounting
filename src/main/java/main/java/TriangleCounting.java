@@ -4,6 +4,7 @@
  */
 package main.java;
 
+import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -23,8 +24,9 @@ public class TriangleCounting {
         }
         String hdfsFile = args[0];
         String outputFile = args[1];
-
-        JavaSparkContext context = new JavaSparkContext();
+        
+        SparkConf conf = new SparkConf().setAppName("Triangle Counting");
+        JavaSparkContext context = new JavaSparkContext(conf);
         JavaRDD<String> lines =context.textFile(hdfsFile);
 
         // Getting the graph edges from the file
