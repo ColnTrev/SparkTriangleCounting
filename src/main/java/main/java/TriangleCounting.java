@@ -18,18 +18,19 @@ import java.util.*;
 
 public class TriangleCounting {
     public static void main(String[] args){
-//        if(args.length < 2){
-//            System.err.println("Usage: TriangleCounting <hdfs file> <output file>");
-//            System.exit(-1);
-//        }
-        boolean debug = true;
-        String hdfsFile = "/home/colntrev/IdeaProjects/SparkTriangleCounting/src/main/java/main/java/tridata.txt";
-        String outputFile = "results";
+        if(args.length < 3){
+            System.err.println("Usage: TriangleCounting <hdfs file> <output file> <debug>");
+            System.exit(-1);
+        }
+        boolean debug = Boolean.parseBoolean(args[2]);
+        String hdfsFile = args[0];
+        String outputFile = args[1];
 
-        SparkConf conf = new SparkConf().setMaster("local").setAppName("Triangle Counting");
+        SparkConf conf = new SparkConf().setAppName("Triangle Counting");
         JavaSparkContext context = new JavaSparkContext(conf);
         JavaRDD<String> lines =context.textFile(hdfsFile);
 
+        long startTime = System.currentTimeMillis();
         // Getting the graph edges from the file
         JavaPairRDD<Long,Long> edges = lines.flatMapToPair(s -> {
                 String[] nodes = s.split(" ");
@@ -116,13 +117,14 @@ public class TriangleCounting {
 
                 return result.iterator();
         }).distinct();
-
-        if(debug) {
+        if(debug){
             uniqueTriangles.foreach(item -> System.out.println(item));
         } else {
             uniqueTriangles.saveAsTextFile(outputFile);
         }
 
+        long endTime = System.currentTimeMillis();
         context.close();
+        System.out.println("Elapsed Time: " + (endTime - startTime));
     }
 }
