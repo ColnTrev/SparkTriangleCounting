@@ -22,21 +22,28 @@ public class TriangleCounting {
             System.err.println("Usage: TriangleCounting <hdfs file> <output file> <debug>");
             System.exit(-1);
         }
-        boolean debug = Boolean.parseBoolean(args[2]);
-        String hdfsFile = args[0];
-        String outputFile = args[1];
+//        boolean debug = Boolean.parseBoolean(args[2]);
+//        String hdfsFile = args[0];
+//        String outputFile = args[1];
 
         SparkConf conf = new SparkConf().setAppName("Triangle Counting");
         JavaSparkContext context = new JavaSparkContext(conf);
-        JavaRDD<String> lines =context.textFile(hdfsFile);
+        boolean debug = true;
+        JavaRDD<String> lines =context.textFile("/home/colntrev/IdeaProjects/SparkTriangleCounting/src/main/java/main/java/bfsdata.txt");
 
         long startTime = System.currentTimeMillis();
         // Getting the graph edges from the file
         JavaPairRDD<Long,Long> edges = lines.flatMapToPair(s -> {
-                String[] nodes = s.split(" ");
-                long start = Long.parseLong(nodes[0]);
-                long end = Long.parseLong(nodes[1]);
-                return Arrays.asList(new Tuple2<>(start,end),new Tuple2<>(end,start)).iterator();
+                String[] nodes = s.split(";");
+                ArrayList<Tuple2<Long,Long>> pairs = new ArrayList<>();
+                long source = Long.parseLong(nodes[0]);
+                String[] connections = nodes[1].split(",");
+                for(String con : connections){
+                    long connection = Long.parseLong(con);
+                    pairs.add(new Tuple2<>(source, connection));
+                    pairs.add(new Tuple2<>(connection, source));
+                }
+                return pairs.iterator();
         });
 
         JavaPairRDD<Long,Iterable<Long>> triangles = edges.groupByKey();
@@ -120,7 +127,7 @@ public class TriangleCounting {
         if(debug){
             uniqueTriangles.foreach(item -> System.out.println(item));
         } else {
-            uniqueTriangles.saveAsTextFile(outputFile);
+            //uniqueTriangles.saveAsTextFile(outputFile);
         }
 
         long endTime = System.currentTimeMillis();
